@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "wiim-api",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

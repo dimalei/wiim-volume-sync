@@ -1,0 +1,20 @@
+meta {
+  name: player-status
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://{{ip-address}}/httpapi.asp?command=getPlayerStatus
+  body: none
+  auth: inherit
+}
+
+params:query {
+  command: getPlayerStatus
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: mute
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://{{ip-address}}/httpapi.asp?command=setPlayerCmd:mute:1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  command: setPlayerCmd:mute:1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

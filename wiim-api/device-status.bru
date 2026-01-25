@@ -1,0 +1,20 @@
+meta {
+  name: device-status
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://{{ip-address}}/httpapi.asp?command=getStatusEx
+  body: none
+  auth: inherit
+}
+
+params:query {
+  command: getStatusEx
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
