@@ -1,47 +1,44 @@
 package com.example.wiimvolumesync
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.tv.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.Surface
-import com.example.wiimvolumesync.ui.theme.WiiMVolumeSyncTheme
+import com.example.wiimvolumesync.data.VolumeSyncConfig
+import com.example.wiimvolumesync.services.VolumeSync
+import com.example.wiimvolumesync.viewmodel.VolumeSyncModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalTvMaterial3Api::class)
+
+    private lateinit var volumeSyncConfig: VolumeSyncConfig
+    private lateinit var viewModel: VolumeSyncModel
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        if (hasFocus) viewModel.init()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            WiiMVolumeSyncTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    shape = RectangleShape
-                ) {
-                    Greeting("Android")
-                }
-            }
+
+        // Preference DataStore
+        volumeSyncConfig = VolumeSyncConfig(this)
+        CoroutineScope(Dispatchers.IO).launch {
+            volumeSyncConfig.ensureDefaults()
         }
+
+        // init viewmodel
+        viewModel = VolumeSyncModel(volumeSyncConfig)
+        VolumeSyncApp.attach(viewModel)
+        setContent {
+            VolumeSyncApp.CreateUI()
+        }
+
+        // start service
+        startService(Intent(this, VolumeSync::class.java))
+
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WiiMVolumeSyncTheme {
-        Greeting("Android")
-    }
-}
