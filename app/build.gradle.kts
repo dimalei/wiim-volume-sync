@@ -54,4 +54,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
+    implementation(libs.okhttp)
 }
