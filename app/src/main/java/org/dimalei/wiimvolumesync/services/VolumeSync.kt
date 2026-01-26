@@ -1,4 +1,4 @@
-package com.example.wiimvolumesync.services
+package org.dimalei.wiimvolumesync.services
 
 import android.app.Service
 import android.content.Intent
@@ -7,17 +7,18 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
 import android.os.Process
+import android.provider.Settings
 import android.util.Log
-import com.example.wiimvolumesync.data.VolumeSyncConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
 
 class VolumeSync : Service() {
-    val TAG = this.javaClass.simpleName
+    val tag: String = this.javaClass.simpleName
 
     // Config
     private val serviceJob = SupervisorJob()
@@ -39,23 +40,23 @@ class VolumeSync : Service() {
     }
 
     override fun onCreate() {
-        super.onCreate()
-        Log.i(TAG, "Volume Sync Service starting ...")
-
-
+        // auto update config
         volumeSyncConfig = VolumeSyncConfig(applicationContext)
         serviceScope.launch {
             volumeSyncConfig.wiimAddressFlow.collectLatest {
                 wiimIp = it
-                Log.i(TAG, "ip set $wiimIp")
+                Log.i(tag, "ip updated $wiimIp")
             }
             volumeSyncConfig.maxVolumeFlow.collectLatest {
                 maxVol = it
-                Log.i(TAG, "maxVol set $maxVol")
+                Log.i(tag, "maxVol updated $maxVol")
             }
         }
 
-        val thread = HandlerThread("VolumeSyncThread", Process.THREAD_PRIORITY_BACKGROUND)
+        val thread = HandlerThread(
+            "VolumeSyncThread",
+            Process.THREAD_PRIORITY_BACKGROUND
+        )
         thread.start()
 
         serviceLooper = thread.looper
@@ -67,16 +68,16 @@ class VolumeSync : Service() {
         )
 
         contentResolver.registerContentObserver(
-            android.provider.Settings.System.CONTENT_URI,
+            Settings.System.CONTENT_URI,
             true,
             settingsObserver!!
         )
 
-        Log.i(TAG, "Observer registered")
+        Log.d(tag, "Volume Sync Service created")
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.i(TAG, "Starting Service")
+        Log.d(tag, "Volume Sync Service starting ...")
 
         // If we get killed, after returning from here, restart
         return START_STICKY
@@ -98,9 +99,6 @@ class VolumeSync : Service() {
         serviceLooper = null
         serviceHandler = null
 
-        super.onDestroy()
-
-
-        Log.i(TAG, "Service Destroyed")
+        Log.i(tag, "Service Destroyed")
     }
 }

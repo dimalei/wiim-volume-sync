@@ -1,15 +1,15 @@
-package com.example.wiimvolumesync
+package org.dimalei.wiimvolumesync
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.wiimvolumesync.data.VolumeSyncConfig
-import com.example.wiimvolumesync.services.VolumeSync
-import com.example.wiimvolumesync.viewmodel.VolumeSyncModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
+import org.dimalei.wiimvolumesync.services.VolumeSync
+import org.dimalei.wiimvolumesync.viewmodel.VolumeSyncModel
 
 class MainActivity : ComponentActivity() {
 

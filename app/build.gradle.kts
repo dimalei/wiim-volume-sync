@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.wiimvolumesync"
+    namespace = "org.dimalei.wiimvolumesync"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.example.wiimvolumesync"
+        applicationId = "org.dimalei.wiimvolumesync"
         minSdk = 30
         targetSdk = 36
         versionCode = 1
@@ -53,4 +53,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.androidx.datastore.preferences)
+    testImplementation(libs.junit)
 }

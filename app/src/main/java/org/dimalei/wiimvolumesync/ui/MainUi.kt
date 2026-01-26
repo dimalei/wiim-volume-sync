@@ -1,4 +1,4 @@
-package com.example.wiimvolumesync.ui
+package org.dimalei.wiimvolumesync.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.example.wiimvolumesync.ui.theme.WiiMVolumeSyncTheme
-import com.example.wiimvolumesync.viewmodel.VolumeSyncModel
+import org.dimalei.wiimvolumesync.viewmodel.VolumeSyncModel
 
 @Composable
 fun Settings(model: VolumeSyncModel) {

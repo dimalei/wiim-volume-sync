@@ -1,4 +1,4 @@
-package com.example.wiimvolumesync.services
+package org.dimalei.wiimvolumesync.services
 
 import android.content.Context
 import android.database.ContentObserver

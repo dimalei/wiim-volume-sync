@@ -1,4 +1,4 @@
-package com.example.wiimvolumesync.data
+package org.dimalei.wiimvolumesync.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore

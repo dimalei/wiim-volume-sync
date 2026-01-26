@@ -1,12 +1,12 @@
-package com.example.wiimvolumesync.viewmodel
+package org.dimalei.wiimvolumesync.viewmodel
 
 import android.util.Log
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.wiimvolumesync.data.VolumeSyncConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
 
 
 class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {

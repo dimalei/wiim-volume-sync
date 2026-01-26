@@ -1,9 +1,9 @@
-package com.example.wiimvolumesync
+package org.dimalei.wiimvolumesync
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
-import com.example.wiimvolumesync.ui.AppUI
-import com.example.wiimvolumesync.viewmodel.VolumeSyncModel
+import org.dimalei.wiimvolumesync.ui.AppUI
+import org.dimalei.wiimvolumesync.viewmodel.VolumeSyncModel
 
 object VolumeSyncApp : AppBase<VolumeSyncModel>() {
 
