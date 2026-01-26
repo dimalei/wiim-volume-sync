@@ -28,7 +28,7 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".services.VolumeSync" />
+        <service android:name=".services.VolumeSyncService" />
     </application>
 
 </manifest>

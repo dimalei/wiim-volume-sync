@@ -16,8 +16,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
+import org.dimalei.wiimvolumesync.data.setPlayerVolume
 
-class VolumeSync : Service() {
+class VolumeSyncService : Service() {
     val tag: String = this.javaClass.simpleName
 
     // Config
@@ -37,9 +38,6 @@ class VolumeSync : Service() {
     private var settingsObserver: SettingsContentObserver? = null
 
     private class ServiceHandler(looper: Looper) : Handler(looper) {}
-
-    // Volume Controller
-    val volumeController = VolumeController()
 
     override fun onCreate() {
         // auto update config
@@ -121,15 +119,17 @@ class VolumeSync : Service() {
             Log.d(tag, "config is still null")
             return
         }
-        volumeController.setVolume(
-            vol = finalVol,
-            ipAddress = wiimIp!!,
-            expectedPinBase64 = pinBase!!,
-            scope = this.serviceScope,
-            onSuccess = {
-                Log.d(tag, "Success! response: $it")
-            },
-            onError = { Log.d(tag, it.toString()) }
-        )
+
+        serviceScope.launch(Dispatchers.IO) {
+            setPlayerVolume(
+                ipAddress = wiimIp!!,
+                expectedPinBase64 = pinBase!!,
+                volume = finalVol,
+                onSuccess = {
+                    Log.d(tag, "Success! response: $it")
+                },
+                onError = { Log.d(tag, it.toString()) }
+            )
+        }
     }
 }

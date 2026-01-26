@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
-import org.dimalei.wiimvolumesync.services.VolumeSync
+import org.dimalei.wiimvolumesync.services.VolumeSyncService
 import org.dimalei.wiimvolumesync.viewmodel.VolumeSyncModel
 
 class MainActivity : ComponentActivity() {
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // start service
-        startService(Intent(this, VolumeSync::class.java))
+        startService(Intent(this, VolumeSyncService::class.java))
 
     }
 }
