@@ -23,10 +23,11 @@ class VolumeSyncConfig(private val context: Context) {
     }
 
 
-    suspend fun storeConfig(wiimAddress: String, maxVol: Int) {
+    suspend fun storeConfig(wiimAddress: String, maxVol: Int, pinBase: String) {
         context.dataStore.edit {
             it[WIIM_IP_ADDRESS_KEY] = wiimAddress
             it[MAX_VOLUME_KEY] = maxVol
+            it[PIN_BASE_KEY] = pinBase
         }
     }
 

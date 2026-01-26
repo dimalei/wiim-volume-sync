@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var viewModel: VolumeSyncModel
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
-        if (hasFocus) viewModel.init()
+        if (hasFocus) viewModel.fetchConfig()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

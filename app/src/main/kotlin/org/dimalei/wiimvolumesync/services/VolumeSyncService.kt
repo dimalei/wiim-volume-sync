@@ -2,29 +2,32 @@ package org.dimalei.wiimvolumesync.services
 
 import android.app.Service
 import android.content.Intent
-import android.os.Handler
+import android.media.AudioManager
 import android.os.HandlerThread
 import android.os.IBinder
-import android.os.Looper
 import android.os.Process
-import android.provider.Settings
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
 import org.dimalei.wiimvolumesync.data.setPlayerVolume
 
 class VolumeSyncService : Service() {
+    // logging
     val tag: String = this.javaClass.simpleName
 
-    // Config
+    // service overhead
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
+    // config
     private lateinit var volumeSyncConfig: VolumeSyncConfig
     private var configJob: Job? = null
 
@@ -32,15 +35,32 @@ class VolumeSyncService : Service() {
     var maxVol: Int = 0
     var pinBase: String? = null
 
-    // Volume Observer
-    private var serviceLooper: Looper? = null
-    private var serviceHandler: ServiceHandler? = null
-    private var settingsObserver: SettingsContentObserver? = null
+    // audio manager
+    private lateinit var audioManager: AudioManager
+    private var lastVol: Int = -1
 
-    private class ServiceHandler(looper: Looper) : Handler(looper) {}
 
     override fun onCreate() {
+
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+
         // auto update config
+        fetchConfig()
+
+        val thread = HandlerThread(
+            "VolumeSyncThread",
+            Process.THREAD_PRIORITY_BACKGROUND
+        )
+        thread.start()
+
+        serviceScope.launch {
+            observeVolumeButtonsByPolling()
+        }
+
+        Log.d(tag, "Volume Sync Service created")
+    }
+
+    private fun fetchConfig() {
         volumeSyncConfig = VolumeSyncConfig(applicationContext)
         serviceScope.launch {
             volumeSyncConfig.wiimAddressFlow.collectLatest {
@@ -57,33 +77,46 @@ class VolumeSyncService : Service() {
         serviceScope.launch {
             volumeSyncConfig.pinBaseFlow.collectLatest {
                 pinBase = it
-                Log.d(tag, "pinBase updated $maxVol")
+                Log.d(tag, "pinBase updated $pinBase")
             }
         }
+    }
 
-        val thread = HandlerThread(
-            "VolumeSyncThread",
-            Process.THREAD_PRIORITY_BACKGROUND
-        )
-        thread.start()
+    private suspend fun observeVolumeButtonsByPolling() {
+        // Choose the stream you care about (usually MUSIC)
+        val stream = AudioManager.STREAM_MUSIC
 
-        serviceLooper = thread.looper
-        serviceHandler = ServiceHandler(thread.looper)
+        while (currentCoroutineContext().isActive) {
+            val current = audioManager.getStreamVolume(stream)
+            if (current != lastVol) {
+                lastVol = current
+                changeVolume(current) // current is already 0..maxStreamVolume
+            }
+            delay(150) // 100-250ms is a common range
+        }
+    }
 
-        settingsObserver = SettingsContentObserver(
-            context = this,
-            handler = serviceHandler!!,
-            onVolumeChanged = { changeVolume(it) }
-        )
+    private fun changeVolume(streamVol: Int) {
+        // Convert stream volume scale to your WiiM scale
+        val streamMax = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val finalVol = (streamVol * maxVol) / streamMax
 
+        Log.d(tag, "Setting volume to $finalVol ...")
 
-        contentResolver.registerContentObserver(
-            Settings.System.CONTENT_URI,
-            true,
-            settingsObserver!!
-        )
+        if (wiimIp == null || pinBase == null) {
+            Log.d(tag, "config is still null")
+            return
+        }
 
-        Log.d(tag, "Volume Sync Service created")
+        serviceScope.launch(Dispatchers.IO) {
+            setPlayerVolume(
+                ipAddress = wiimIp!!,
+                expectedPinBase64 = pinBase!!,
+                volume = finalVol,
+                onSuccess = { Log.d(tag, "Success! response: $it") },
+                onError = { Log.d(tag, it.toString()) }
+            )
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -101,35 +134,7 @@ class VolumeSyncService : Service() {
 
     override fun onDestroy() {
         configJob?.cancel()
-
-        settingsObserver?.let { contentResolver.unregisterContentObserver(it) }
-        settingsObserver = null
-
-        serviceLooper?.quitSafely()
-        serviceLooper = null
-        serviceHandler = null
-
         Log.i(tag, "Service Destroyed")
     }
 
-    private fun changeVolume(vol: Int) {
-        val finalVol = vol * maxVol / 15
-        Log.d(tag, "Setting volume to $finalVol ...")
-        if (wiimIp == null || pinBase == null) {
-            Log.d(tag, "config is still null")
-            return
-        }
-
-        serviceScope.launch(Dispatchers.IO) {
-            setPlayerVolume(
-                ipAddress = wiimIp!!,
-                expectedPinBase64 = pinBase!!,
-                volume = finalVol,
-                onSuccess = {
-                    Log.d(tag, "Success! response: $it")
-                },
-                onError = { Log.d(tag, it.toString()) }
-            )
-        }
-    }
 }

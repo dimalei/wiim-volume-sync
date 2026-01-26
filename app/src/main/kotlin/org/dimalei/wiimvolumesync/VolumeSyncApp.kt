@@ -12,7 +12,7 @@ object VolumeSyncApp : AppBase<VolumeSyncModel>() {
     }
 
     override fun onNewActivity(activity: ComponentActivity) {
-        viewModel.init()
+        viewModel.fetchConfig()
     }
 
     @Composable
