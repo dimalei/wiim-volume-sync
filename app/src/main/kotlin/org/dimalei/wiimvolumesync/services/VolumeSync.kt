@@ -28,16 +28,18 @@ class VolumeSync : Service() {
     private var configJob: Job? = null
 
     var wiimIp: String? = null
-    var maxVol: Int? = null
+    var maxVol: Int = 0
+    var pinBase: String? = null
 
     // Volume Observer
     private var serviceLooper: Looper? = null
     private var serviceHandler: ServiceHandler? = null
     private var settingsObserver: SettingsContentObserver? = null
 
-    private class ServiceHandler(looper: Looper) : Handler(looper) {
+    private class ServiceHandler(looper: Looper) : Handler(looper) {}
 
-    }
+    // Volume Controller
+    val volumeController = VolumeController()
 
     override fun onCreate() {
         // auto update config
@@ -45,11 +47,19 @@ class VolumeSync : Service() {
         serviceScope.launch {
             volumeSyncConfig.wiimAddressFlow.collectLatest {
                 wiimIp = it
-                Log.i(tag, "ip updated $wiimIp")
+                Log.d(tag, "ip updated $wiimIp")
             }
+        }
+        serviceScope.launch {
             volumeSyncConfig.maxVolumeFlow.collectLatest {
                 maxVol = it
-                Log.i(tag, "maxVol updated $maxVol")
+                Log.d(tag, "maxVol updated $maxVol")
+            }
+        }
+        serviceScope.launch {
+            volumeSyncConfig.pinBaseFlow.collectLatest {
+                pinBase = it
+                Log.d(tag, "pinBase updated $maxVol")
             }
         }
 
@@ -64,8 +74,10 @@ class VolumeSync : Service() {
 
         settingsObserver = SettingsContentObserver(
             context = this,
-            handler = serviceHandler!!
+            handler = serviceHandler!!,
+            onVolumeChanged = { changeVolume(it) }
         )
+
 
         contentResolver.registerContentObserver(
             Settings.System.CONTENT_URI,
@@ -76,7 +88,7 @@ class VolumeSync : Service() {
         Log.d(tag, "Volume Sync Service created")
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(tag, "Volume Sync Service starting ...")
 
         // If we get killed, after returning from here, restart
@@ -100,5 +112,24 @@ class VolumeSync : Service() {
         serviceHandler = null
 
         Log.i(tag, "Service Destroyed")
+    }
+
+    private fun changeVolume(vol: Int) {
+        val finalVol = vol * maxVol / 15
+        Log.d(tag, "Setting volume to $finalVol ...")
+        if (wiimIp == null || pinBase == null) {
+            Log.d(tag, "config is still null")
+            return
+        }
+        volumeController.setVolume(
+            vol = finalVol,
+            ipAddress = wiimIp!!,
+            expectedPinBase64 = pinBase!!,
+            scope = this.serviceScope,
+            onSuccess = {
+                Log.d(tag, "Success! response: $it")
+            },
+            onError = { Log.d(tag, it.toString()) }
+        )
     }
 }

@@ -7,7 +7,11 @@ import android.os.Handler
 import android.util.Log
 
 
-class SettingsContentObserver(val context: Context, handler: Handler) : ContentObserver(handler) {
+class SettingsContentObserver(
+    val context: Context,
+    val onVolumeChanged: (Int) -> Unit,
+    handler: Handler
+) : ContentObserver(handler) {
     val TAG = javaClass.simpleName
 
     val audioManager: AudioManager =
@@ -20,5 +24,6 @@ class SettingsContentObserver(val context: Context, handler: Handler) : ContentO
     override fun onChange(selfChange: Boolean) {
         val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         Log.d(TAG, "system volume $currentVolume")
+        onVolumeChanged(currentVolume)
     }
 }

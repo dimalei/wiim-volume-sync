@@ -19,6 +19,7 @@ class VolumeSyncConfig(private val context: Context) {
     companion object {
         val WIIM_IP_ADDRESS_KEY = stringPreferencesKey("WIIM_IP_ADDRESS")
         val MAX_VOLUME_KEY = intPreferencesKey("MAX_VOLUME")
+        val PIN_BASE_KEY = stringPreferencesKey("PIN_BASE")
     }
 
 
@@ -37,6 +38,9 @@ class VolumeSyncConfig(private val context: Context) {
             if (MAX_VOLUME_KEY !in prefs) {
                 prefs[MAX_VOLUME_KEY] = 50
             }
+            if (PIN_BASE_KEY !in prefs) {
+                prefs[PIN_BASE_KEY] = "p2NKrN70qaSrxvfXASCT+A0/iKenUHL27yU1rNmCz64="
+            }
         }
     }
 
@@ -46,6 +50,10 @@ class VolumeSyncConfig(private val context: Context) {
 
     val maxVolumeFlow: Flow<Int> = context.dataStore.data.map {
         it[MAX_VOLUME_KEY] ?: 50
+    }
+
+    val pinBaseFlow: Flow<String> = context.dataStore.data.map {
+        it[PIN_BASE_KEY] ?: "p2NKrN70qaSrxvfXASCT+A0/iKenUHL27yU1rNmCz64="
     }
 
 }

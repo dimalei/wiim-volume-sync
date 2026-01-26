@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -35,7 +36,6 @@ fun getPlayerStatus(
         .get()
         .build()
 
-
     lateinit var responseJson: JSONObject
 
     try {
@@ -53,7 +53,7 @@ fun setPlayerVolume(
     ipAddress: String,
     expectedPinBase64: String,
     volume: Int,
-    onSuccess: () -> Unit,
+    onSuccess: (String) -> Unit,
     onError: (Exception) -> Unit
 ) {
     val url = HttpUrl.Builder()
@@ -70,13 +70,14 @@ fun setPlayerVolume(
         .get()
         .build()
 
+    val response: Response
     try {
-        client.newCall(request).execute()
+        response = client.newCall(request).execute()
     } catch (e: Exception) {
         onError(e)
         return
     }
-    onSuccess()
+    onSuccess(response.toString())
 }
 
 
