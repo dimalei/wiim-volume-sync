@@ -26,7 +26,7 @@ class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
             Log.d(tag, "max vpl = $max")
 
             ipTextFieldState.edit {
-                replace(0, length, ip.toString())
+                replace(0, length, ip)
             }
 
             maxVolTextFieldState.edit {

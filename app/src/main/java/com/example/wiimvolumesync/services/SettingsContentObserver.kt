@@ -11,7 +11,7 @@ class SettingsContentObserver(val context: Context, handler: Handler) : ContentO
     val TAG = javaClass.simpleName
 
     val audioManager: AudioManager =
-        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager;
+        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     override fun deliverSelfNotifications(): Boolean {
         return false

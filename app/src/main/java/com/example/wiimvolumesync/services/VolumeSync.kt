@@ -34,7 +34,7 @@ class VolumeSync : Service() {
     private var serviceHandler: ServiceHandler? = null
     private var settingsObserver: SettingsContentObserver? = null
 
-    private inner class ServiceHandler(looper: Looper) : Handler(looper) {
+    private class ServiceHandler(looper: Looper) : Handler(looper) {
 
     }
 
