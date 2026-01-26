@@ -1,5 +1,6 @@
 package org.dimalei.wiimvolumesync.data
 
+import android.annotation.SuppressLint
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -84,7 +85,8 @@ private fun buildPinnedClient(
     ipAddress: String,
     expectedPinBase64: String
 ): OkHttpClient {
-    val trustManager = object : X509TrustManager {
+    val trustManager = @SuppressLint("CustomX509TrustManager")
+    object : X509TrustManager {
         override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
 
         override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
