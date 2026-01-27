@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A simple app developed for Android TV boxes to sync their system volume with a WiiM Amp.
+A simple POC app developed for Android TV boxes to sync their system volume with a WiiM Amp.
 
 ## Installation
 
@@ -42,6 +42,11 @@ checked against the the WiiM Certificate again when sending commands.
 ## Known issues and limitations
 
 The app was mostly hacked together in a day out of necessity. Expect a lot of them.
+
+Some things which might get changed:
+
+- the app should really use volume +/- key inputs to control the volume, not the system volume.
+- incremental instead of absolute volume changes
 
 ## Contributing
 
