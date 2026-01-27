@@ -1,6 +1,5 @@
 package org.dimalei.wiimvolumesync.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,15 +9,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -34,97 +36,102 @@ fun Settings(model: VolumeSyncModel) {
     Scaffold() {
         Row(
             modifier = Modifier
+                .padding(it)
                 .fillMaxSize()
-                .padding(it),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            SettingsPanel(model)
-            Box(Modifier.width(16.dp))
-            LogPanel(model)
+            SettingsPanel(model, Modifier.weight(1f))
+            Box(Modifier.width(8.dp))
+            LogPanel(model, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-fun LogPanel(model: VolumeSyncModel) {
-    Box(Modifier.padding(vertical = 8.dp)) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(400.dp)
-                .background(MaterialTheme.colorScheme.inverseSurface)
-                .padding(8.dp)
-        ) {
-            Text(
-                "Test Output",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.inverseOnSurface
-            )
-            LazyColumn() {
-                items(model.logMessages.value) {
-                    Text(
-                        "> $it",
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.inverseOnSurface
-                    )
-                }
-            }
-        }
-    }
-}
+fun LogPanel(model: VolumeSyncModel, modifier: Modifier) {
+    val scrollState = rememberScrollState()
 
-@Composable
-fun SettingsPanel(model: VolumeSyncModel) {
-    Column(
-        modifier = Modifier
-            .width(400.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    LaunchedEffect(model.log) {
+        scrollState.animateScrollTo(scrollState.maxValue)
+    }
+
+    OutlinedCard(
+        modifier = modifier
+            .fillMaxHeight()
     ) {
         Text(
-            "Volume Sync Settings",
-            style = MaterialTheme.typography.titleMedium
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .verticalScroll(scrollState),
+            text = model.log,
+            fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.bodySmall
         )
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("IP Address:") },
-            state = model.ipTextFieldState,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            )
-        )
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Max Volume:") },
-            state = model.maxVolTextFieldState,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            )
-        )
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Public Key Pin:") },
-            state = model.pinBaseFieldState,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done
-            )
-        )
+    }
+}
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
-                onClick = { model.apply() }
-            ) { Text("Apply") }
-            OutlinedButton(
-                onClick = { model.getPublicKeyPin() }
-            ) { Text("Get Key Pin") }
-            OutlinedButton(
-                onClick = { model.test() }
-            ) { Text("Test") }
+@Composable
+fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
+    Card(modifier = modifier) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                "Volume Sync Settings",
+                style = MaterialTheme.typography.titleMedium
+            )
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("IP Address:") },
+                maxLines = 1,
+                value = model.wiimIpAddress,
+                onValueChange = { model.wiimIpAddress = it },
+                isError = model.ipHasErrors,
+                supportingText = {
+                    if (model.ipHasErrors) {
+                        Text(
+                            "Incorrect IP format",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                )
+            )
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Max Volume:") },
+                maxLines = 1,
+                value = model.wiimMaxVol,
+                onValueChange = { model.wiimMaxVol = it },
+                isError = model.maxVolHasErrors,
+                supportingText = {
+                    if (model.maxVolHasErrors) {
+                        Text(
+                            "Value 0 - 99",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                )
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = { model.verifyAndApply() },
+                    enabled = !model.ipHasErrors && !model.maxVolHasErrors
+                ) { Text("Verify & Apply") }
+                OutlinedButton(
+                    onClick = { model.testManually() }
+                ) { Text("Test") }
+            }
         }
     }
 }
