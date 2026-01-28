@@ -104,15 +104,15 @@ fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Max Volume:") },
+                label = { Text("Volume Increment:") },
                 maxLines = 1,
-                value = model.wiimMaxVol,
-                onValueChange = { model.wiimMaxVol = it },
-                isError = model.maxVolHasErrors,
+                value = model.volumeStep,
+                onValueChange = { model.volumeStep = it },
+                isError = model.volumeStepHasErrors,
                 supportingText = {
-                    if (model.maxVolHasErrors) {
+                    if (model.volumeStepHasErrors) {
                         Text(
-                            "Value 0 - 99",
+                            model.volumeStepErrorMessage,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -126,7 +126,7 @@ fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = { model.verifyAndApply() },
-                    enabled = !model.ipHasErrors && !model.maxVolHasErrors
+                    enabled = !model.ipHasErrors && !model.volumeStepHasErrors
                 ) { Text("Verify & Apply") }
                 OutlinedButton(
                     onClick = { model.testManually() }
