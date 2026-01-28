@@ -13,18 +13,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
-import org.dimalei.wiimvolumesync.data.getPlayerStatus
+import org.dimalei.wiimvolumesync.data.getDeviceStatus
 import org.dimalei.wiimvolumesync.data.getServerPublicKeyPin
 
 
+val MAX_VOL_STEP = 10
+val MIN_VOL_STEP = 1
+
 class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
+
 
     val tag = this.javaClass.simpleName
 
     var log by mutableStateOf("")
 
     var wiimIpAddress by mutableStateOf("")
-    var wiimMaxVol by mutableStateOf("50")
+    var volumeStep by mutableStateOf("2")
     lateinit var keyHash: String
 
 
@@ -32,23 +36,24 @@ class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
         !InetAddresses.isNumericAddress(wiimIpAddress)
     }
 
-    val maxVolHasErrors by derivedStateOf {
-        !(wiimMaxVol.isNotBlank() && wiimMaxVol.isDigitsOnly() && Integer.valueOf(wiimMaxVol.trim()) in 0..99)
+    val volumeStepHasErrors by derivedStateOf {
+        !(volumeStep.isNotBlank() && volumeStep.isDigitsOnly() && Integer.valueOf(volumeStep.trim()) in MIN_VOL_STEP..MAX_VOL_STEP)
     }
+    val volumeStepErrorMessage = "Must be $MIN_VOL_STEP - $MAX_VOL_STEP"
 
     fun fetchConfig() {
         viewModelScope.launch {
             val ip = config.wiimAddressFlow.first()
-            val max = config.maxVolumeFlow.first()
+            val volStep = config.maxVolumeFlow.first()
             val pinBase = config.pinBaseFlow.first()
 
             Log.d(tag, "fetched ip = $ip")
-            Log.d(tag, "max vpl = $max")
-            Log.d(tag, "pinBase vpl = $pinBase")
+            Log.d(tag, "volume step = $volStep")
+            Log.d(tag, "pinBase = $pinBase")
 
 
             wiimIpAddress = ip
-            wiimMaxVol = max.toString()
+            volumeStep = volStep.toString()
             keyHash = pinBase
         }
     }
@@ -58,7 +63,7 @@ class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
     }
 
     fun verifyAndApply() {
-        if (ipHasErrors || maxVolHasErrors) {
+        if (ipHasErrors || volumeStepHasErrors) {
             logMessage("Your input has errors.")
             return
         }
@@ -86,18 +91,18 @@ class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
     }
 
     suspend fun apply() {
-        val vol = wiimMaxVol.toIntOrNull() ?: 50
+        val volumeStep = this@VolumeSyncModel.volumeStep.toIntOrNull() ?: 2
 
         config.storeConfig(
             wiimAddress = wiimIpAddress,
-            maxVol = vol,
+            volumeStep = volumeStep,
             pinBase = keyHash
         )
-        logMessage("Settings Applied: wiimAddress=$wiimIpAddress, maxVol=$vol, pinBase=$keyHash")
+        logMessage("Settings Applied: wiimAddress=$wiimIpAddress, volumeStep=$volumeStep, pinBase=$keyHash")
     }
 
     private fun test() {
-        getPlayerStatus(
+        getDeviceStatus(
             ipAddress = wiimIpAddress,
             expectedPinBase64 = keyHash,
             onSuccess = { logMessage("Device Found: " + it.getString("DeviceName")) },

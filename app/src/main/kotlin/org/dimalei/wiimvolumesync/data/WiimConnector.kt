@@ -1,6 +1,7 @@
 package org.dimalei.wiimvolumesync.data
 
 import android.annotation.SuppressLint
+import android.util.Base64
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -15,13 +16,78 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
+
+const val MAX_VOL = 99;
+const val MIN_VOL = 0;
+
+fun changePlayerVolume(
+    ipAddress: String,
+    expectedPinBase64: String,
+    amount: Int,
+    onSuccess: (String) -> Unit,
+    onError: (Exception) -> Unit
+) {
+    getPlayerStatus(
+        ipAddress = ipAddress,
+        expectedPinBase64 = expectedPinBase64,
+        onSuccess = {
+            val currentVolume = it.getString("vol").toInt()
+            val targetVolume = currentVolume + amount
+
+            if (targetVolume !in MIN_VOL..MAX_VOL) {
+                return@getPlayerStatus
+            }
+            setPlayerVolume(
+                ipAddress = ipAddress,
+                expectedPinBase64 = expectedPinBase64,
+                volume = targetVolume,
+                onSuccess = onSuccess,
+                onError = { e -> throw e }
+            )
+        },
+        onError = onError,
+    )
+}
+
 fun getPlayerStatus(
     ipAddress: String,
     expectedPinBase64: String,
     onSuccess: (response: JSONObject) -> Unit,
     onError: (Exception) -> Unit
 ) {
+    val url = HttpUrl.Builder()
+        .scheme("https")
+        .host(ipAddress)
+        .addPathSegment("httpapi.asp")
+        .addQueryParameter("command", "getPlayerStatus")
+        .build()
 
+    val client = buildPinnedClient(ipAddress, expectedPinBase64)
+
+    val request = Request.Builder()
+        .url(url)
+        .get()
+        .build()
+
+    lateinit var responseJson: JSONObject
+
+    try {
+        val response = client.newCall(request).execute()
+        val reader = BufferedReader(InputStreamReader(response.body.byteStream()))
+        responseJson = JSONObject(reader.readText())
+        onSuccess(responseJson)
+    } catch (e: Exception) {
+        onError(e)
+        return
+    }
+}
+
+fun getDeviceStatus(
+    ipAddress: String,
+    expectedPinBase64: String,
+    onSuccess: (response: JSONObject) -> Unit,
+    onError: (Exception) -> Unit
+) {
     val url = HttpUrl.Builder()
         .scheme("https")
         .host(ipAddress)
@@ -42,11 +108,11 @@ fun getPlayerStatus(
         val response = client.newCall(request).execute()
         val reader = BufferedReader(InputStreamReader(response.body.byteStream()))
         responseJson = JSONObject(reader.readText())
+        onSuccess(responseJson)
     } catch (e: Exception) {
         onError(e)
         return
     }
-    onSuccess(responseJson)
 }
 
 fun setPlayerVolume(
@@ -73,11 +139,11 @@ fun setPlayerVolume(
     val response: Response
     try {
         response = client.newCall(request).execute()
+        onSuccess(response.toString())
     } catch (e: Exception) {
         onError(e)
         return
     }
-    onSuccess(response.toString())
 }
 
 
@@ -96,7 +162,7 @@ private fun buildPinnedClient(
             // leaf cert public key -> SHA-256 -> base64
             val pubKeyDer = chain[0].publicKey.encoded
             val sha256 = MessageDigest.getInstance("SHA-256").digest(pubKeyDer)
-            val actualB64 = android.util.Base64.encodeToString(sha256, android.util.Base64.NO_WRAP)
+            val actualB64 = Base64.encodeToString(sha256, Base64.NO_WRAP)
 
             if (actualB64 != expectedPinBase64) {
                 throw CertificateException("Public key pin mismatch")

@@ -18,15 +18,15 @@ class VolumeSyncConfig(private val context: Context) {
 
     companion object {
         val WIIM_IP_ADDRESS_KEY = stringPreferencesKey("WIIM_IP_ADDRESS")
-        val MAX_VOLUME_KEY = intPreferencesKey("MAX_VOLUME")
+        val VOLUME_STEP_KEY = intPreferencesKey("VOLUME_STEP")
         val PIN_BASE_KEY = stringPreferencesKey("PIN_BASE")
     }
 
 
-    suspend fun storeConfig(wiimAddress: String, maxVol: Int, pinBase: String) {
+    suspend fun storeConfig(wiimAddress: String, volumeStep: Int, pinBase: String) {
         context.dataStore.edit {
             it[WIIM_IP_ADDRESS_KEY] = wiimAddress
-            it[MAX_VOLUME_KEY] = maxVol
+            it[VOLUME_STEP_KEY] = volumeStep
             it[PIN_BASE_KEY] = pinBase
         }
     }
@@ -36,8 +36,8 @@ class VolumeSyncConfig(private val context: Context) {
             if (WIIM_IP_ADDRESS_KEY !in prefs) {
                 prefs[WIIM_IP_ADDRESS_KEY] = "192.168.1.53"
             }
-            if (MAX_VOLUME_KEY !in prefs) {
-                prefs[MAX_VOLUME_KEY] = 50
+            if (VOLUME_STEP_KEY !in prefs) {
+                prefs[VOLUME_STEP_KEY] = 2
             }
             if (PIN_BASE_KEY !in prefs) {
                 prefs[PIN_BASE_KEY] = "p2NKrN70qaSrxvfXASCT+A0/iKenUHL27yU1rNmCz64="
@@ -50,7 +50,7 @@ class VolumeSyncConfig(private val context: Context) {
     }
 
     val maxVolumeFlow: Flow<Int> = context.dataStore.data.map {
-        it[MAX_VOLUME_KEY] ?: 50
+        it[VOLUME_STEP_KEY] ?: 2
     }
 
     val pinBaseFlow: Flow<String> = context.dataStore.data.map {

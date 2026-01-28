@@ -1,0 +1,9 @@
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/accessibility_service_description"
+    android:accessibilityEventTypes="typeAllMask|typeContextClicked|typeViewClicked"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRequestFilterKeyEvents"
+    android:notificationTimeout="0"
+    android:canRetrieveWindowContent="false"
+    android:canRequestFilterKeyEvents="true"
+    android:settingsActivity="org.dimalei.wiimvolumesync.MainActivity" />

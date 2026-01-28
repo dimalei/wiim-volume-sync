@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">WiiM Volume Sync</string>
+    <string name="accessibility_service_description">A service that listens for volume key presses.</string>
 </resources>

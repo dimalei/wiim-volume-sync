@@ -1,6 +1,5 @@
 package org.dimalei.wiimvolumesync
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,11 +7,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
-import org.dimalei.wiimvolumesync.services.VolumeSyncService
 import org.dimalei.wiimvolumesync.viewmodel.VolumeSyncModel
 
 class MainActivity : ComponentActivity() {
-
+    
     private lateinit var volumeSyncConfig: VolumeSyncConfig
     private lateinit var viewModel: VolumeSyncModel
 
@@ -35,10 +33,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             VolumeSyncApp.CreateUI()
         }
-
-        // start service
-        startService(Intent(this, VolumeSyncService::class.java))
-
     }
 }
 
