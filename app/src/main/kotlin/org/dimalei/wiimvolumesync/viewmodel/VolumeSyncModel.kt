@@ -1,5 +1,6 @@
 package org.dimalei.wiimvolumesync.viewmodel
 
+import android.content.Context
 import android.net.InetAddresses
 import android.util.Log
 import androidx.compose.runtime.derivedStateOf
@@ -10,51 +11,56 @@ import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
-import org.dimalei.wiimvolumesync.data.getDeviceStatus
+import org.dimalei.wiimvolumesync.data.ConfigUpdater
+import org.dimalei.wiimvolumesync.data.WiimConnector
 import org.dimalei.wiimvolumesync.data.getServerPublicKeyPin
 
 
 val MAX_VOL_STEP = 10
 val MIN_VOL_STEP = 1
 
-class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
-
+class VolumeSyncModel(context: Context) : ViewModel() {
 
     val tag = this.javaClass.simpleName
-
     var log by mutableStateOf("")
 
-    var wiimIpAddress by mutableStateOf("")
-    var volumeStep by mutableStateOf("2")
+
+    // control
+    val wiimConnector = WiimConnector(context)
+
+    // config
+    val configUpdater = ConfigUpdater(
+        context = context,
+        onIpUpdated = { ip = it },
+        onPinBaseUpdated = { keyHash = it },
+        onVolumeStepUpdate = { volStep = it.toString() }
+    )
+
+
+    // input
+    var ip by mutableStateOf("")
+    var volStep by mutableStateOf("2")
     lateinit var keyHash: String
 
-
     val ipHasErrors by derivedStateOf {
-        !InetAddresses.isNumericAddress(wiimIpAddress)
+        !InetAddresses.isNumericAddress(ip)
     }
-
     val volumeStepHasErrors by derivedStateOf {
-        !(volumeStep.isNotBlank() && volumeStep.isDigitsOnly() && Integer.valueOf(volumeStep.trim()) in MIN_VOL_STEP..MAX_VOL_STEP)
+        !(volStep.isNotBlank() && volStep.isDigitsOnly() && Integer.valueOf(volStep.trim()) in MIN_VOL_STEP..MAX_VOL_STEP)
     }
     val volumeStepErrorMessage = "Must be $MIN_VOL_STEP - $MAX_VOL_STEP"
 
     fun fetchConfig() {
         viewModelScope.launch {
-            val ip = config.wiimAddressFlow.first()
-            val volStep = config.maxVolumeFlow.first()
-            val pinBase = config.pinBaseFlow.first()
+            ip = configUpdater.getIp()
+            volStep = configUpdater.getVolStep().toString()
+            keyHash = configUpdater.getPinBase()
 
-            Log.d(tag, "fetched ip = $ip")
-            Log.d(tag, "volume step = $volStep")
-            Log.d(tag, "pinBase = $pinBase")
-
-
-            wiimIpAddress = ip
-            volumeStep = volStep.toString()
-            keyHash = pinBase
+            Log.d(
+                tag,
+                "settings updated ip: $ip, volStep: $volStep, pinBase: $keyHash"
+            )
         }
     }
 
@@ -72,7 +78,7 @@ class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
                 getPublicKeyPin()
                 apply()
                 test()
-                logMessage("✅ Success")
+                logMessage("Success ✔\uFE0F")
             } catch (e: Exception) {
                 logMessage(e.message ?: "Unknown error: ${e.toString()}")
             }
@@ -81,7 +87,7 @@ class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
 
     private fun getPublicKeyPin() {
         getServerPublicKeyPin(
-            host = wiimIpAddress,
+            host = ip,
             onSuccess = {
                 keyHash = it
                 logMessage("SSLKeyHash extracted: $it")
@@ -90,21 +96,16 @@ class VolumeSyncModel(private val config: VolumeSyncConfig) : ViewModel() {
         )
     }
 
-    suspend fun apply() {
-        val volumeStep = this@VolumeSyncModel.volumeStep.toIntOrNull() ?: 2
-
-        config.storeConfig(
-            wiimAddress = wiimIpAddress,
-            volumeStep = volumeStep,
-            pinBase = keyHash
+    private fun apply() {
+        configUpdater.apply(
+            ip = ip,
+            volStep = volStep.toIntOrNull() ?: 2,
+            keyHash = keyHash
         )
-        logMessage("Settings Applied: wiimAddress=$wiimIpAddress, volumeStep=$volumeStep, pinBase=$keyHash")
     }
 
     private fun test() {
-        getDeviceStatus(
-            ipAddress = wiimIpAddress,
-            expectedPinBase64 = keyHash,
+        wiimConnector.getDeviceStatus(
             onSuccess = { logMessage("Device Found: " + it.getString("DeviceName")) },
             onError = { throw it }
         )

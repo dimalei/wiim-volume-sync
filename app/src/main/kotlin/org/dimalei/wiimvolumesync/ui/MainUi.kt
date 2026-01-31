@@ -86,8 +86,8 @@ fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("IP Address:") },
                 maxLines = 1,
-                value = model.wiimIpAddress,
-                onValueChange = { model.wiimIpAddress = it },
+                value = model.ip,
+                onValueChange = { model.ip = it },
                 isError = model.ipHasErrors,
                 supportingText = {
                     if (model.ipHasErrors) {
@@ -106,8 +106,8 @@ fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Volume Increment:") },
                 maxLines = 1,
-                value = model.volumeStep,
-                onValueChange = { model.volumeStep = it },
+                value = model.volStep,
+                onValueChange = { model.volStep = it },
                 isError = model.volumeStepHasErrors,
                 supportingText = {
                     if (model.volumeStepHasErrors) {
