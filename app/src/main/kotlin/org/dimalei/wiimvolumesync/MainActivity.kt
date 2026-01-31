@@ -10,7 +10,8 @@ import org.dimalei.wiimvolumesync.data.VolumeSyncConfig
 import org.dimalei.wiimvolumesync.viewmodel.VolumeSyncModel
 
 class MainActivity : ComponentActivity() {
-    
+
+
     private lateinit var volumeSyncConfig: VolumeSyncConfig
     private lateinit var viewModel: VolumeSyncModel
 
@@ -27,8 +28,9 @@ class MainActivity : ComponentActivity() {
             volumeSyncConfig.ensureDefaults()
         }
 
+
         // init viewmodel
-        viewModel = VolumeSyncModel(volumeSyncConfig)
+        viewModel = VolumeSyncModel(applicationContext)
         VolumeSyncApp.attach(viewModel)
         setContent {
             VolumeSyncApp.CreateUI()
