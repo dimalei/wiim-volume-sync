@@ -18,13 +18,12 @@ adb install wiim-volume-sync.apk
 
 ## Quick start
 
+- Enable WiiM Volume Sync in Accessibility services
+- Configure > enter IP Adress of your WiiM device > Apply & Config
+
 ![app-screen.png](img/app-screen.png)
 
-- Open the app from the Apps screen and set your WiiM Devices IP.
-- Set the max volume to your liking.
-
-> You may need to adjust the System Setting so you remote controls the AndroidTV Media/System
-> Volume.
+![accessibility-settings.png](img/accessibility-settings.png)
 
 ## Usage
 
@@ -32,21 +31,18 @@ Use your Android TVs remote to control the Volume on your WiiM Amp.
 
 ### Basic operation
 
-The apps polls the system volume in a 150ms interval and forwards it to your WiiM device over HTTP
-once it changed.
-
-WiiM Devices use a self signed certificate, which Android refuses to accept it by default. When
-setting the WiiM IP, the app fetches WiiM devices SSL certificate and stores its hash. It will be
-checked against the the WiiM Certificate again when sending commands.
+The App creates an accessibility service which intercepts Volume +/- commands and transforms them
+into a WiiM IP API call.
 
 ## Known issues and limitations
 
 The app was mostly hacked together in a day out of necessity. Expect a lot of them.
 
-Some things which might get changed:
+## Compatibility
 
-- the app should really use volume +/- key inputs to control the volume, not the system volume.
-- incremental instead of absolute volume changes
+Tested on a Nvidia Shield TV.
+
+> Intercepting Keystrokes might not work on newer devices.
 
 ## Contributing
 
