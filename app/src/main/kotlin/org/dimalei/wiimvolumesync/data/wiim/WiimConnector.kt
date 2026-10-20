@@ -1,16 +1,19 @@
-package org.dimalei.wiimvolumesync.data
+package org.dimalei.wiimvolumesync.data.wiim
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.util.Base64
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.dimalei.wiimvolumesync.data.settings.AppSettings
+import org.dimalei.wiimvolumesync.data.settings.SettingsRepository
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -24,36 +27,19 @@ import javax.net.ssl.X509TrustManager
 const val MAX_VOL = 99
 const val MIN_VOL = 0
 
-class WiimConnector(context: Context) {
+class WiimConnector(settingsRepository: SettingsRepository) {
     val TAG = javaClass.simpleName
-    private val scope = CoroutineScope(Dispatchers.IO)
-
-    private val configUpdater = ConfigUpdater(
-        context = context,
-        onIpUpdated = {
-            ip = it
-        },
-        onPinBaseUpdated = {
-            keyHash = it
-            client = buildPinnedClient()
-        },
-        onVolumeStepUpdate = { volStep = it }
-    )
-
-    var currentVolume = -1
-    lateinit var ip: String
-    lateinit var keyHash: String
-    var volStep = 2
-
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var appSettings = AppSettings()
     lateinit var client: OkHttpClient
+    private var currentVolume = -1
 
     init {
         scope.launch {
-            ip = configUpdater.getIp()
-            keyHash = configUpdater.getPinBase()
-            volStep = configUpdater.getVolStep()
-            client = buildPinnedClient()
-            Log.d(TAG, "Wiim Connector initialized $ip, $volStep, $keyHash")
+            settingsRepository.settingsFlow.collectLatest {
+                appSettings = it
+                client = buildPinnedClient()
+            }
         }
     }
 
@@ -65,7 +51,7 @@ class WiimConnector(context: Context) {
             return
         }
         scope.launch {
-            val targetVol = currentVolume + volStep * direction.factor
+            val targetVol = currentVolume + appSettings.volumeStep * direction.factor
             if (targetVol in MIN_VOL..MAX_VOL) {
                 setPlayerVolume(
                     volume = targetVol,
@@ -96,7 +82,7 @@ class WiimConnector(context: Context) {
     ) {
         val url = HttpUrl.Builder()
             .scheme("https")
-            .host(ip)
+            .host(appSettings.wiimIpAddress)
             .addPathSegment("httpapi.asp")
             .addQueryParameter("command", "getPlayerStatus")
             .build()
@@ -125,7 +111,7 @@ class WiimConnector(context: Context) {
     ) {
         val url = HttpUrl.Builder()
             .scheme("https")
-            .host(ip)
+            .host(appSettings.wiimIpAddress)
             .addPathSegment("httpapi.asp")
             .addQueryParameter("command", "getStatusEx")
             .build()
@@ -155,7 +141,7 @@ class WiimConnector(context: Context) {
     ) {
         val url = HttpUrl.Builder()
             .scheme("https")
-            .host(ip)
+            .host(appSettings.wiimIpAddress)
             .addPathSegment("httpapi.asp")
             .addQueryParameter("command", "setPlayerCmd:vol:$volume")
             .build()
@@ -191,7 +177,7 @@ class WiimConnector(context: Context) {
                 val sha256 = MessageDigest.getInstance("SHA-256").digest(pubKeyDer)
                 val actualB64 = Base64.encodeToString(sha256, Base64.NO_WRAP)
 
-                if (actualB64 != keyHash) {
+                if (actualB64 != appSettings.pubKeyHash) {
                     throw CertificateException("Public key pin mismatch")
                 }
             }
@@ -204,7 +190,7 @@ class WiimConnector(context: Context) {
 
         return OkHttpClient.Builder()
             // Since you're connecting by IP and the cert won't match IP SAN, skip hostname verify ONLY for this IP.
-            .hostnameVerifier { host, _ -> host == ip }
+            .hostnameVerifier { host, _ -> host == appSettings.wiimIpAddress }
             .sslSocketFactory(sslContext.socketFactory, trustManager)
             .build()
     }
