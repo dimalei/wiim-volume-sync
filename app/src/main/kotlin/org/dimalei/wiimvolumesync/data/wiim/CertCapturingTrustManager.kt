@@ -1,4 +1,4 @@
-package org.dimalei.wiimvolumesync.data
+package org.dimalei.wiimvolumesync.data.wiim
 
 import android.annotation.SuppressLint
 import java.security.cert.CertificateException

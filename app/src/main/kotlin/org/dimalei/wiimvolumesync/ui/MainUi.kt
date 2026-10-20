@@ -86,8 +86,8 @@ fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("IP Address:") },
                 maxLines = 1,
-                value = model.ip,
-                onValueChange = { model.ip = it },
+                value = model.wiimIpAddress,
+                onValueChange = { model.wiimIpAddress = it },
                 isError = model.ipHasErrors,
                 supportingText = {
                     if (model.ipHasErrors) {
@@ -106,13 +106,33 @@ fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Volume Increment:") },
                 maxLines = 1,
-                value = model.volStep,
-                onValueChange = { model.volStep = it },
+                value = model.volumeStep,
+                onValueChange = { model.volumeStep = it },
                 isError = model.volumeStepHasErrors,
                 supportingText = {
                     if (model.volumeStepHasErrors) {
                         Text(
                             model.volumeStepErrorMessage,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                )
+            )
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Netflix Button URL") },
+                maxLines = 1,
+                value = model.netflixButtonUrl,
+                onValueChange = { model.netflixButtonUrl = it },
+                isError = model.volumeStepHasErrors,
+                supportingText = {
+                    if (model.netflixActionUrlHasErrors) {
+                        Text(
+                            model.netflixActionUrlErrorMessage,
                             color = MaterialTheme.colorScheme.error
                         )
                     }

@@ -1,8 +1,8 @@
 package org.dimalei.wiimvolumesync.viewmodel
 
-import android.content.Context
 import android.net.InetAddresses
 import android.util.Log
+import android.webkit.URLUtil
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,59 +10,65 @@ import androidx.compose.runtime.setValue
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.dimalei.wiimvolumesync.data.ConfigUpdater
-import org.dimalei.wiimvolumesync.data.WiimConnector
-import org.dimalei.wiimvolumesync.data.getServerPublicKeyPin
+import org.dimalei.wiimvolumesync.data.settings.AppSettings
+import org.dimalei.wiimvolumesync.data.settings.SettingsRepository
+import org.dimalei.wiimvolumesync.data.wiim.WiimConnector
+import org.dimalei.wiimvolumesync.data.wiim.getServerPublicKeyPin
 
 
 val MAX_VOL_STEP = 10
 val MIN_VOL_STEP = 1
 
-class VolumeSyncModel(context: Context) : ViewModel() {
+class VolumeSyncModel(
+    val settingsRepository: SettingsRepository,
+    val wiimConnector: WiimConnector
+) : ViewModel() {
 
     val tag = this.javaClass.simpleName
     var log by mutableStateOf("")
 
-
-    // control
-    val wiimConnector = WiimConnector(context)
-
-    // config
-    val configUpdater = ConfigUpdater(
-        context = context,
-        onIpUpdated = { ip = it },
-        onPinBaseUpdated = { keyHash = it },
-        onVolumeStepUpdate = { volStep = it.toString() }
-    )
-
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // input
-    var ip by mutableStateOf("")
-    var volStep by mutableStateOf("2")
-    lateinit var keyHash: String
+    var wiimIpAddress by mutableStateOf("")
+    var volumeStep by mutableStateOf("2")
+    lateinit var pubKeyHash: String
+    var netflixButtonUrl by mutableStateOf("")
+
+
+    init {
+        scope.launch {
+            settingsRepository.settingsFlow.collectLatest {
+                wiimIpAddress = it.wiimIpAddress
+                volumeStep = "${it.volumeStep}"
+                pubKeyHash = it.pubKeyHash
+                netflixButtonUrl = it.netflixButtonUrl
+                Log.d(
+                    tag,
+                    "settings updated wiimIpAddress: $wiimIpAddress, volumeStep: $volumeStep, pubKeyHash: $pubKeyHash, netflixButtonUrl: $netflixButtonUrl"
+                )
+            }
+        }
+    }
 
     val ipHasErrors by derivedStateOf {
-        !InetAddresses.isNumericAddress(ip)
+        !InetAddresses.isNumericAddress(wiimIpAddress)
     }
     val volumeStepHasErrors by derivedStateOf {
-        !(volStep.isNotBlank() && volStep.isDigitsOnly() && Integer.valueOf(volStep.trim()) in MIN_VOL_STEP..MAX_VOL_STEP)
+        !(volumeStep.isNotBlank() && volumeStep.isDigitsOnly() && Integer.valueOf(volumeStep.trim()) in MIN_VOL_STEP..MAX_VOL_STEP)
     }
     val volumeStepErrorMessage = "Must be $MIN_VOL_STEP - $MAX_VOL_STEP"
 
-    fun fetchConfig() {
-        viewModelScope.launch {
-            ip = configUpdater.getIp()
-            volStep = configUpdater.getVolStep().toString()
-            keyHash = configUpdater.getPinBase()
-
-            Log.d(
-                tag,
-                "settings updated ip: $ip, volStep: $volStep, pinBase: $keyHash"
-            )
-        }
+    val netflixActionUrlHasErrors by derivedStateOf {
+        !URLUtil.isValidUrl(netflixButtonUrl)
     }
+
+    val netflixActionUrlErrorMessage = "Must be a valid URL"
 
     private fun logMessage(message: String) {
         this.log += "> $message\n"
@@ -87,20 +93,23 @@ class VolumeSyncModel(context: Context) : ViewModel() {
 
     private fun getPublicKeyPin() {
         getServerPublicKeyPin(
-            host = ip,
+            host = wiimIpAddress,
             onSuccess = {
-                keyHash = it
+                pubKeyHash = it
                 logMessage("SSLKeyHash extracted: $it")
             },
             onError = { throw it }
         )
     }
 
-    private fun apply() {
-        configUpdater.apply(
-            ip = ip,
-            volStep = volStep.toIntOrNull() ?: 2,
-            keyHash = keyHash
+    private suspend fun apply() {
+        settingsRepository.updateSettings(
+            AppSettings(
+                wiimIpAddress = wiimIpAddress,
+                volumeStep = Integer.valueOf(volumeStep),
+                pubKeyHash = pubKeyHash,
+                netflixButtonUrl = netflixButtonUrl
+            )
         )
     }
 
@@ -116,7 +125,7 @@ class VolumeSyncModel(context: Context) : ViewModel() {
             try {
                 test()
             } catch (e: Exception) {
-                logMessage(e.message ?: "Unknown error: ${e.toString()}")
+                logMessage(e.message ?: "Unknown error: ${e}")
             }
         }
     }

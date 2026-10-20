@@ -1,4 +1,4 @@
-package org.dimalei.wiimvolumesync.data
+package org.dimalei.wiimvolumesync.data.wiim
 
 import android.util.Base64
 import java.net.InetSocketAddress

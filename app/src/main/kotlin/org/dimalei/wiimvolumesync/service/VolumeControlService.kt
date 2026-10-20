@@ -1,21 +1,26 @@
-package org.dimalei.wiimvolumesync.services
+package org.dimalei.wiimvolumesync.service
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
-import org.dimalei.wiimvolumesync.data.WiimConnector
+import org.dimalei.wiimvolumesync.data.settings.SettingsRepository
+import org.dimalei.wiimvolumesync.data.wiim.WiimConnector
 
 
 @SuppressLint("AccessibilityPolicy")
 class VolumeControlService : AccessibilityService() {
     val TAG = javaClass.simpleName
     lateinit var wiimConnector: WiimConnector
+    lateinit var settingsRepository: SettingsRepository
 
-    override fun onServiceConnected() {
-        Log.d(TAG, "Service Connected")
-        wiimConnector = WiimConnector(applicationContext)
+
+    override fun onCreate() {
+        super.onCreate()
+        settingsRepository = SettingsRepository(applicationContext)
+        wiimConnector = WiimConnector(settingsRepository)
+        Log.d(TAG, "Service Created")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
