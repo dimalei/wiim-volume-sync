@@ -36,13 +36,20 @@ class VolumeSyncModel(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    enum class EditDialog {
+        WIIM_IP_ADDRESS,
+        VOLUME_STEP,
+        NETFLIX_BUTTON_URL,
+        NONE
+    }
+
     // input
     var wiimIpAddress by mutableStateOf("")
     var volumeStep by mutableStateOf("2")
     lateinit var pubKeyHash: String
     var netflixButtonUrl by mutableStateOf("")
 
-    val openEditDialog = mutableStateOf(false)
+    val openEditDialog = mutableStateOf(EditDialog.NONE)
 
 
     init {
@@ -72,7 +79,6 @@ class VolumeSyncModel(
         !URLUtil.isValidUrl(netflixButtonUrl) && netflixButtonUrl.isNotEmpty()
     }
 
-    val netflixActionUrlErrorMessage = "Must be a valid URL"
 
     fun logMessage(message: String) {
         if (logs.size > 100) {

@@ -1,5 +1,6 @@
 package org.dimalei.wiimvolumesync.activity.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,42 +15,39 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShapeDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.tv.material3.ShapeDefaults
-import androidx.tv.material3.Text
-import com.example.wiimvolumesync.ui.theme.WiiMVolumeSyncTheme
+import org.dimalei.wiimvolumesync.activity.ui.theme.WiiMVolumeSyncTheme
 import org.dimalei.wiimvolumesync.activity.viewmodel.VolumeSyncModel
 
 @Composable
 fun Settings(model: VolumeSyncModel) {
-    Scaffold() {
-
-
+    Scaffold(Modifier.background(MaterialTheme.colorScheme.background)) {
         when {
-            model.openEditDialog.value -> {
+            model.openEditDialog.value != VolumeSyncModel.EditDialog.NONE -> {
                 InputDialog(model)
             }
         }
-
         Row(
             modifier = Modifier
                 .padding(it)
@@ -66,36 +64,86 @@ fun Settings(model: VolumeSyncModel) {
 
 @Composable
 fun InputDialog(model: VolumeSyncModel) {
-    Dialog(onDismissRequest = { model.openEditDialog.value = false }) {
+    Dialog(onDismissRequest = { model.openEditDialog.value = VolumeSyncModel.EditDialog.NONE }) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
         ) {
-            Column {
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Netflix Button URL") },
-                    maxLines = 1,
-                    value = model.netflixButtonUrl,
-                    onValueChange = { model.netflixButtonUrl = it },
-                    isError = model.volumeStepHasErrors,
-                    supportingText = {
-                        if (model.netflixActionUrlHasErrors) {
-                            Text(
-                                model.netflixActionUrlErrorMessage,
-                                color = MaterialTheme.colorScheme.error
+            Column(modifier = Modifier.padding(16.dp)) {
+                when (model.openEditDialog.value) {
+                    VolumeSyncModel.EditDialog.WIIM_IP_ADDRESS -> {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("WiiM IP Address") },
+                            maxLines = 1,
+                            value = model.wiimIpAddress,
+                            onValueChange = { model.wiimIpAddress = it },
+                            isError = model.ipHasErrors,
+                            supportingText = {
+                                if (model.ipHasErrors) {
+                                    Text(
+                                        "Not a valid IP address",
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
                             )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done
-                    )
-                )
+                        )
+                    }
+
+                    VolumeSyncModel.EditDialog.VOLUME_STEP -> {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Volume Step") },
+                            maxLines = 1,
+                            value = model.volumeStep,
+                            onValueChange = { model.volumeStep = it },
+                            isError = model.volumeStepHasErrors,
+                            supportingText = {
+                                if (model.volumeStepHasErrors) {
+                                    Text(
+                                        model.volumeStepErrorMessage,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            )
+                        )
+                    }
+
+                    VolumeSyncModel.EditDialog.NETFLIX_BUTTON_URL ->
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Netflix Button URL") },
+                            maxLines = 1,
+                            value = model.netflixButtonUrl,
+                            onValueChange = { model.netflixButtonUrl = it },
+                            isError = model.netflixActionUrlHasErrors,
+                            supportingText = {
+                                if (model.volumeStepHasErrors) {
+                                    Text(
+                                        "Must be a valid URL",
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Uri,
+                                imeAction = ImeAction.Done
+                            )
+                        )
+
+                    VolumeSyncModel.EditDialog.NONE -> {}
+                }
                 Button(
                     shape = ShapeDefaults.Small,
-                    onClick = { model.openEditDialog.value = false }
+                    onClick = { model.openEditDialog.value = VolumeSyncModel.EditDialog.NONE }
                 ) {
                     Text("close")
                 }
@@ -159,97 +207,69 @@ fun LogEntry(log: String) {
 fun SettingsPanel(model: VolumeSyncModel, modifier: Modifier) {
     Card(modifier = modifier) {
         Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Text(
-                "Volume Sync Settings",
+                modifier = Modifier.padding(horizontal = 8.dp),
                 style = MaterialTheme.typography.titleMedium,
+                text = "WiiM Volume Sync Settings"
             )
-            ListItem(
-                modifier = Modifier.clickable(onClick = { model.openEditDialog.value = true }),
-                headlineContent = { Text("WiiM IP Address") },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Default.Home,
-                        contentDescription = "WiiM Icon",
-                    )
-                },
-                supportingContent = { Text(text = if (model.wiimIpAddress.isNotBlank()) model.wiimIpAddress else "Please enter IP") }
-            )
-
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("IP Address:") },
-                maxLines = 1,
-                value = model.wiimIpAddress,
-                onValueChange = { model.wiimIpAddress = it },
-                isError = model.ipHasErrors,
-                supportingText = {
-                    if (model.ipHasErrors) {
-                        Text(
-                            "Incorrect IP format",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                )
-            )
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Volume Increment:") },
-                maxLines = 1,
-                value = model.volumeStep,
-                onValueChange = { model.volumeStep = it },
-                isError = model.volumeStepHasErrors,
-                supportingText = {
-                    if (model.volumeStepHasErrors) {
-                        Text(
-                            model.volumeStepErrorMessage,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                )
-            )
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Netflix Button URL") },
-                maxLines = 1,
-                value = model.netflixButtonUrl,
-                onValueChange = { model.netflixButtonUrl = it },
-                isError = model.volumeStepHasErrors,
-                supportingText = {
-                    if (model.netflixActionUrlHasErrors) {
-                        Text(
-                            model.netflixActionUrlErrorMessage,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                )
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.padding(vertical = 8.dp)) {
+                SettingsMenuItem(
+                    headline = "WiiM IP Address",
+                    support = model.wiimIpAddress,
+                    onClick = {
+                        model.openEditDialog.value =
+                            VolumeSyncModel.EditDialog.WIIM_IP_ADDRESS
+                    })
+                SettingsMenuItem(
+                    headline = "Volume Increment",
+                    support = model.volumeStep,
+                    onClick = {
+                        model.openEditDialog.value =
+                            VolumeSyncModel.EditDialog.VOLUME_STEP
+                    })
+                SettingsMenuItem(
+                    headline = "Netflix Button URL",
+                    support = model.netflixButtonUrl,
+                    onClick = {
+                        model.openEditDialog.value =
+                            VolumeSyncModel.EditDialog.NETFLIX_BUTTON_URL
+                    })
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Button(
                     onClick = { model.verifyAndApply() },
+                    shape = MaterialTheme.shapes.small,
                     enabled = !model.ipHasErrors && !model.volumeStepHasErrors
                 ) { Text("Verify & Apply") }
                 OutlinedButton(
-                    onClick = { model.testManually() }
+                    onClick = { model.testManually() },
+                    shape = MaterialTheme.shapes.small
                 ) { Text("Test") }
             }
         }
     }
+}
+
+@Composable
+fun SettingsMenuItem(headline: String, support: String, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier
+            .clip(shape = MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick),
+        colors = ListItemDefaults.colors().copy(containerColor = Color.Transparent),
+        headlineContent = { Text(headline) },
+        supportingContent = {
+            Text(
+                text = support,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    )
 }
 
 @Composable
