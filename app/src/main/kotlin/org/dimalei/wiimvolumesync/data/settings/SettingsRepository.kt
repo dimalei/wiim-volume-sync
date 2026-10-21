@@ -7,11 +7,14 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.dimalei.wiimvolumesync.data.settings.GuiLogger.log
 
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
 class SettingsRepository(context: Context) {
+
+    val tag: String = javaClass.simpleName
     private val dataStore = context.applicationContext.dataStore
 
     companion object PreferenceKeys {
@@ -21,13 +24,14 @@ class SettingsRepository(context: Context) {
         val NETFLIX_BUTTON_URL = stringPreferencesKey("NETFLIX_BUTTON_URL")
     }
 
-    suspend fun updateSettings(settings: AppSettings) {
+    suspend fun storeSettings(settings: AppSettings) {
         dataStore.edit {
             it[WIIM_IP_ADDRESS_KEY] = settings.wiimIpAddress
             it[VOLUME_STEP_KEY] = settings.volumeStep
             it[PUB_KEY_HASH_KEY] = settings.pubKeyHash
             it[NETFLIX_BUTTON_URL] = settings.netflixButtonUrl
         }
+        log(tag, "settings stored: $settings")
     }
 
     val settingsFlow: Flow<AppSettings> = dataStore.data

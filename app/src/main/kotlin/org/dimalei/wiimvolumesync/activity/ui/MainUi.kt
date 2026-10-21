@@ -1,4 +1,4 @@
-package org.dimalei.wiimvolumesync.ui
+package org.dimalei.wiimvolumesync.activity.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,11 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
@@ -108,23 +109,48 @@ fun InputDialog(model: VolumeSyncModel) {
 
 @Composable
 fun LogPanel(model: VolumeSyncModel, modifier: Modifier) {
-    val scrollState = rememberScrollState()
+    val scrollState = rememberLazyListState()
 
-    LaunchedEffect(model.log) {
-        scrollState.animateScrollTo(scrollState.maxValue)
+    LaunchedEffect(model.logs.size) {
+        if (model.logs.isNotEmpty())
+            scrollState.animateScrollToItem(model.logs.size - 1)
     }
 
     OutlinedCard(
         modifier = modifier
             .fillMaxHeight()
     ) {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 4.dp),
+            state = scrollState
+        ) {
+            item { Box(modifier = Modifier.height(4.dp)) }
+            items(
+                count = model.logs.size,
+                itemContent = { LogEntry(model.logs[it]) }
+            )
+            item { Box(modifier = Modifier.height(4.dp)) }
+        }
+    }
+}
+
+@Composable
+fun LogEntry(log: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(1.dp)
+    ) {
         Text(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .verticalScroll(scrollState),
-            text = model.log,
-            fontFamily = FontFamily.Monospace,
-            style = MaterialTheme.typography.bodySmall
+            ">", fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Box(modifier = Modifier.width(2.dp))
+        Text(
+            log, fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }
