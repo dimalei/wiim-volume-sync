@@ -1,5 +1,7 @@
 # WiiM Volume Sync
 
+<img width="930" height="523" alt="Screenshot From 2026-10-21 21-27-03" src="https://github.com/user-attachments/assets/bd513ddf-1e08-43ab-b367-d7b1792a08e5" />
+
 ## Introduction
 
 A simple POC app developed for Android TV boxes to sync their system volume with a WiiM Amp.
@@ -21,9 +23,8 @@ adb install wiim-volume-sync.apk
 - Enable WiiM Volume Sync in Accessibility services
 - Configure > enter IP Adress of your WiiM device > Apply & Config
 
-![app-screen.png](img/app-screen.png)
+<img width="930" height="523" alt="Screenshot From 2026-10-21 21-32-42" src="https://github.com/user-attachments/assets/28c23dd7-0f8e-4d32-804b-b7583a30f981" />
 
-![accessibility-settings.png](img/accessibility-settings.png)
 
 ## Usage
 
