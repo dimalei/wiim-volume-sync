@@ -2,9 +2,10 @@
 
 <img width="930" height="523" alt="Screenshot From 2026-10-21 21-27-03" src="https://github.com/user-attachments/assets/bd513ddf-1e08-43ab-b367-d7b1792a08e5" />
 
-## Introduction
+## Features
 
-A simple POC app developed for Android TV boxes to sync their system volume with a WiiM Amp.
+- Controls the volume of your WiiM device from your AndroidTV / Nvidia Shield Remote
+- Sends a GET request to a custom URL when pressing the Netflix Button (eg. toggle the lights)
 
 ## Installation
 
@@ -26,25 +27,18 @@ adb install wiim-volume-sync.apk
 <img width="930" height="523" alt="Screenshot From 2026-10-21 21-32-42" src="https://github.com/user-attachments/assets/28c23dd7-0f8e-4d32-804b-b7583a30f981" />
 
 
-## Usage
-
-Use your Android TVs remote to control the Volume on your WiiM Amp.
-
 ### Basic operation
 
-The App creates an accessibility service which intercepts Volume +/- commands and transforms them
-into a WiiM IP API call.
+The App creates an accessibility service which intercepts Volume +/- and Netflix Button (`KeyEvent.KEYCODE_BUTTON_12`) commands and transforms them
+into a WiiM IP API or HTTP GET call.
 
-## Known issues and limitations
-
-The app was mostly hacked together in a day out of necessity. Expect a lot of them.
 
 ## Compatibility
 
 Tested on a Nvidia Shield TV.
 
-> Intercepting Keystrokes might not work on newer devices.
+> Intercepting Keystrokes might not work on newer devices & target SDKs above 36.
 
 ## Contributing
 
-Fork/Clone/Copy at your own will.
+Fork/Clone/Copy at your own will. A thank you is enough.
