@@ -1,4 +1,4 @@
-package org.dimalei.wiimvolumesync.viewmodel
+package org.dimalei.wiimvolumesync.activity.viewmodel
 
 import android.net.InetAddresses
 import android.util.Log
@@ -32,6 +32,8 @@ class VolumeSyncModel(
     val tag = this.javaClass.simpleName
     var log by mutableStateOf("")
 
+    var logs = mutableListOf<String>()
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // input
@@ -39,6 +41,8 @@ class VolumeSyncModel(
     var volumeStep by mutableStateOf("2")
     lateinit var pubKeyHash: String
     var netflixButtonUrl by mutableStateOf("")
+
+    val openEditDialog = mutableStateOf(false)
 
 
     init {
@@ -70,8 +74,12 @@ class VolumeSyncModel(
 
     val netflixActionUrlErrorMessage = "Must be a valid URL"
 
-    private fun logMessage(message: String) {
-        this.log += "> $message\n"
+    fun logMessage(message: String) {
+        if (logs.size > 100) {
+            logs.removeAt(0)
+        }
+        logs.add(message)
+        this.log += "> $message"
     }
 
     fun verifyAndApply() {
