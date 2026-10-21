@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.dimalei.wiimvolumesync.data.settings.AppSettings
+import org.dimalei.wiimvolumesync.data.settings.GuiLogger.log
 import org.dimalei.wiimvolumesync.data.settings.SettingsRepository
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -28,7 +29,7 @@ const val MAX_VOL = 99
 const val MIN_VOL = 0
 
 class WiimConnector(settingsRepository: SettingsRepository) {
-    val TAG = javaClass.simpleName
+    val tag: String = javaClass.simpleName
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var appSettings = AppSettings()
     lateinit var client: OkHttpClient
@@ -56,10 +57,14 @@ class WiimConnector(settingsRepository: SettingsRepository) {
                 setPlayerVolume(
                     volume = targetVol,
                     onSuccess = {
-                        Log.i(TAG, "Volume set to $targetVol")
+                        log(tag, "Volume set to $targetVol")
+                        Log.i(tag, "Volume set to $targetVol")
                         currentVolume = targetVol
                     },
-                    onError = { Log.i(TAG, "Failed to set volume: $it") }
+                    onError = {
+                        log(tag, "Failed to set volume: $it")
+                        Log.i(tag, "Failed to set volume: $it")
+                    }
                 )
             }
         }
@@ -70,9 +75,13 @@ class WiimConnector(settingsRepository: SettingsRepository) {
             getPlayerStatus(
                 {
                     currentVolume = it.getString("vol").toInt()
-                    Log.d(TAG, "Current volume set $currentVolume")
+                    log(tag, "Current volume set $currentVolume")
+                    Log.d(tag, "Current volume set $currentVolume")
                 },
-                { Log.e(TAG, "Fetching volume failed: $it") })
+                {
+                    log(tag, "Fetching volume failed: $it")
+                    Log.e(tag, "Fetching volume failed: $it")
+                })
         }
     }
 

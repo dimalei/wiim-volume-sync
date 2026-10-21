@@ -18,7 +18,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.WiiMVolumeSync">
+        android:theme="@style/Theme.WiiMVolumeSync"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".activity.MainActivity"
             android:exported="true">
@@ -29,8 +30,6 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!--        <service android:name=".services.VolumeSyncService" />-->
         <service
             android:name=".service.VolumeControlService"
             android:exported="true"

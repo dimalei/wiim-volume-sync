@@ -5,6 +5,7 @@ import android.util.Log
 import android.webkit.URLUtil
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.text.isDigitsOnly
@@ -21,8 +22,8 @@ import org.dimalei.wiimvolumesync.data.wiim.WiimConnector
 import org.dimalei.wiimvolumesync.data.wiim.getServerPublicKeyPin
 
 
-val MAX_VOL_STEP = 10
-val MIN_VOL_STEP = 1
+const val MAX_VOL_STEP = 10
+const val MIN_VOL_STEP = 1
 
 class VolumeSyncModel(
     val settingsRepository: SettingsRepository,
@@ -30,9 +31,8 @@ class VolumeSyncModel(
 ) : ViewModel() {
 
     val tag = this.javaClass.simpleName
-    var log by mutableStateOf("")
 
-    var logs = mutableListOf<String>()
+    var logs = mutableStateListOf<String>()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -69,7 +69,7 @@ class VolumeSyncModel(
     val volumeStepErrorMessage = "Must be $MIN_VOL_STEP - $MAX_VOL_STEP"
 
     val netflixActionUrlHasErrors by derivedStateOf {
-        !URLUtil.isValidUrl(netflixButtonUrl)
+        !URLUtil.isValidUrl(netflixButtonUrl) && netflixButtonUrl.isNotEmpty()
     }
 
     val netflixActionUrlErrorMessage = "Must be a valid URL"
@@ -79,7 +79,6 @@ class VolumeSyncModel(
             logs.removeAt(0)
         }
         logs.add(message)
-        this.log += "> $message"
     }
 
     fun verifyAndApply() {
@@ -111,7 +110,7 @@ class VolumeSyncModel(
     }
 
     private suspend fun apply() {
-        settingsRepository.updateSettings(
+        settingsRepository.storeSettings(
             AppSettings(
                 wiimIpAddress = wiimIpAddress,
                 volumeStep = Integer.valueOf(volumeStep),
